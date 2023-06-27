@@ -32,6 +32,7 @@ type ShopState = {
   maxPrice: number;
   maxThreads: number;
   nameCategory: string;
+  availableInOrder: boolean;
 };
 const initialState: ShopState = {
   phones: [
@@ -243,6 +244,7 @@ const initialState: ShopState = {
   maxPrice: 0,
   maxThreads: 0,
   nameCategory: '',
+  availableInOrder: false,
 };
 
 const shopSlice = createSlice({
@@ -250,11 +252,38 @@ const shopSlice = createSlice({
   initialState,
   reducers: {
     addToOrder(state, action: PayloadAction<number>) {
-      state.phones.map((phone) =>
-        phone.id == action.payload
-          ? { ...phone, click: (phone.click = true) }
-          : phone,
-      );
+      state.availableInOrder = false;
+      state.orders.map((order) => {
+        if (order.id === action.payload) {
+          order.count = order.count + 1;
+          state.availableInOrder = true;
+        }
+      });
+      if (state.availableInOrder === false) {
+        state.phones.map((phone) => {
+          if (phone.id === action.payload) {
+            phone.click = true;
+            state.orders.push(phone);
+          }
+        });
+      }
+    },
+    removeCount(state, action: PayloadAction<number>) {
+      state.orders.map((order) => {
+        if (order.id === action.payload) {
+          order.count = order.count - 1;
+        }
+        if (order.count === 0) {
+          state.orders = state.orders.filter(
+            (order) => order.id !== action.payload,
+          );
+          state.phones.map((phone) => {
+            if (phone.id === action.payload) {
+              phone.click = false;
+            }
+          });
+        }
+      });
     },
     //   filterCategories(state, action: PayloadAction<string>): void {
     //     state.filter_phone = [];
@@ -435,21 +464,5 @@ const shopSlice = createSlice({
     //   },
   },
 });
-export const {
-  addToOrder,
-  addcount,
-  addToVersus,
-  DeleteInVersus,
-  deleteOrder,
-  filterCategories,
-  startPhone,
-  afterAddOrder,
-  filterSearchPhone,
-  versusMaxPrice,
-  versusMaxThreads,
-  countSum,
-  filterAfterDeleteOrder,
-  filterOrderDeleteClick,
-  MinusCountOrder,
-} = shopSlice.actions;
+export const { addToOrder, removeCount } = shopSlice.actions;
 export default shopSlice.reducer;
